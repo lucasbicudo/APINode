@@ -13,10 +13,14 @@ app.use(express.json());
 // CRUD Routes
 app.get("/", (req, res) => res.send("I'm Learning Node.js"));
 
-app.get("/books", (req, res) => {
-  books.find({}, (err, result) => {
-    res.status(200).json(result);
-  });
+app.get("/books", async (req, res) => {
+  try {
+    const booksResult = await books.find();
+    res.status(200).json(booksResult);
+  } catch (err){
+    res.status(500).json(err)
+  }
+  
 });
 
 app.get("/books/:id", (req, res) => {
