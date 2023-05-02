@@ -1,22 +1,27 @@
 import express from "express";
+import db from "./config/config.js";
+import books from "./models/Livro.js";
+
+db.on("error", console.log.bind(console, "Connection Error"));
+db.once("open", () => {
+  console.log("Connection Successful");
+});
+
 const app = express();
 app.use(express.json());
 
-const books = [
-  { id: 1, title: "Em busca de Sentido" },
-  { id: 2, title: "A arte da guerra" },
-  { id: 3, title: "Começe pelo porque" },
-];
-
 // CRUD Routes
 app.get("/", (req, res) => res.send("I'm Learning Node.js"));
+
 app.get("/books", (req, res) => {
-  res.status(200).send(books);
+  books.find({}, (err, result) => {
+    res.status(200).json(result);
+  });
 });
 
-app.put("/books/:id", (req, res) => {
-  let find = findBook(req.params.id);
-  res.status(200).json(books[find]);
+app.get("/books/:id", (req, res) => {
+  let found = findBook(req.params.id);
+  res.status(200).json(books[found]);
 });
 
 app.post("/books", (req, res) => {
@@ -25,14 +30,20 @@ app.post("/books", (req, res) => {
 });
 
 app.put("/books/:id", (req, res) => {
-  let find = findBook(req.params.id);
-  books[find] = req.body;
+  let found = findBook(req.params.id);
+  books[found] = req.body;
   res.status(200).send("Updated was sucessful");
+});
+
+app.delete("/books/:id", (req, res) => {
+  let { id } = req.params;
+  let found = findBook(id);
+  books.splice(found, 1);
+  res.send(`Book ${id} removed with sucess`);
 });
 
 function findBook(id) {
   return books.findIndex((book) => book.id == id);
 }
-//cre
 
 export default app;
