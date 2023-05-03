@@ -1,6 +1,7 @@
 import express from 'express';
 import db from './config/config.js';
 import books from './models/Livro.js';
+import routes from './routes/index.js';
 
 db.on('error', console.log.bind(console, 'Connection Error'));
 db.once('open', () => {
@@ -9,18 +10,8 @@ db.once('open', () => {
 
 const app = express();
 app.use(express.json());
-
+routes(app);
 // CRUD Routes
-app.get('/', (req, res) => res.send("I'm Learning Node.js"));
-
-app.get('/books', async (req, res) => {
-  try {
-    const booksResult = await books.find();
-    res.status(200).json(booksResult);
-  } catch (err) {
-    res.status(500).json(err);
-  }
-});
 
 app.get('/books/:id', (req, res) => {
   let found = findBook(req.params.id);
