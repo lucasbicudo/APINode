@@ -7,7 +7,7 @@ const routes = (app) => {
   app
     .route('/')
     .get((req, res) =>
-      res.status(200).send({ titulo: "I'm Learning Node.js" })
+      res.status(200).send({ titulo: 'I\'m Learning Node.js' })
     );
 
   app.use(express.json(), books, authors, editor);

@@ -1,44 +1,39 @@
 import books from '../models/Book.js';
 
 class BookController {
-  static listBooks = async (req, res) => {
+  static listBooks = async (req, res, next) => {
     try {
       const book = await books.find().populate('author').populate('editor');
       res.status(200).json(book);
     } catch (err) {
-      res.status(500).send({ message: `${err.message}` });
+      next(err);
     }
   };
 
-  static listBookById = async (req, res) => {
-    const id = req.params.id;
-    await books
-      .findById(id)
-      .then((book) => {
-        if (!book) {
-          return res.status(404).send('ID não encontrado');
-        }
+  static listBookById = async (req, res, next) => {
+    try {
+      const id = req.params.id;
+      const book = await books.findById(id);
+      if (!book) {
+        return res.status(404).send({ message: 'ID não encontrado' });
+      } else {
         return res.status(200).send(book);
-      })
-      .catch((err) => {
-        return res.status(500).send({
-          message: `${err.message} => Houve algum erro verifique o ID digitado`,
-        });
-      });
+      }
+    } catch (err) {
+      next(err);
+    }
   };
 
   static createBooks = async (req, res) => {
-    const book = new books(req.body);
-    await book
-      .save()
-      .then(() => {
-        return res.status(201).send(book.toJSON());
-      })
-      .catch((err) => {
-        return res
-          .status(500)
-          .send({ message: `${err.message} - dado obrigatório` });
-      });
+    try {
+      const book = new books(req.body);
+      await book.save();
+      return res.status(201).send(book.toJSON());
+    } catch (err) {
+      return res
+        .status(500)
+        .send({ message: `${err.message} - dado obrigatório` });
+    }
   };
 
   static updateBooks = async (req, res) => {
@@ -91,7 +86,7 @@ class BookController {
       .then((returna) => {
         res.status(200).send(returna);
       })
-      .catch((err) => {
+      .catch(() => {
         res.status(404).send({
           messageErr: `id => ${editor} não foi encontrado, Digite um id correto`,
         });
