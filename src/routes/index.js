@@ -1,6 +1,7 @@
 import express from 'express';
 import books from './booksRoutes.js';
 import authors from './authorsRoutes.js';
+import editor from './editorRoutes.js';
 
 const routes = (app) => {
   app
@@ -9,7 +10,7 @@ const routes = (app) => {
       res.status(200).send({ titulo: "I'm Learning Node.js" })
     );
 
-  app.use(express.json(), books, authors);
+  app.use(express.json(), books, authors, editor);
 };
 
 export default routes;

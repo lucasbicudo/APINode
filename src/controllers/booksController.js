@@ -3,7 +3,7 @@ import books from '../models/Book.js';
 class BookController {
   static listBooks = async (req, res) => {
     try {
-      const book = await books.find().populate('author');
+      const book = await books.find().populate('author').populate('editor');
       res.status(200).json(book);
     } catch (err) {
       res.status(500).send({ message: `${err.message}` });
@@ -66,6 +66,35 @@ class BookController {
       })
       .catch((err) => {
         return res.status(500).send({ message: `${err.message} => Deu erro` });
+      });
+  };
+
+  static listBookByPublisher = async (req, res) => {
+    const publisher = req.query.publisher;
+    await books
+      .find({ editor: publisher })
+      .populate('author')
+      .then((returna) => {
+        res.status(200).send(returna);
+      })
+      .catch((err) => {
+        res.send(err);
+      });
+  };
+
+  static listBookByPublisherId = async (req, res) => {
+    const editor = req.params.id;
+    await books
+      .find({ editor: { _id: editor } })
+      .populate('author')
+      .populate('editor')
+      .then((returna) => {
+        res.status(200).send(returna);
+      })
+      .catch((err) => {
+        res.status(404).send({
+          messageErr: `id => ${editor} não foi encontrado, Digite um id correto`,
+        });
       });
   };
 }
