@@ -4,11 +4,10 @@ import authors from './authorsRoutes.js';
 import editor from './editorRoutes.js';
 
 const routes = (app) => {
-  app
-    .route('/')
-    .get((req, res) =>
-      res.status(200).send({ titulo: 'I\'m Learning Node.js' })
-    );
+  app.route('/').get((req, res) =>
+    // eslint-disable-next-line quotes
+    res.status(200).send({ titulo: "I'm Learning Node.js" })
+  );
 
   app.use(express.json(), books, authors, editor);
 };

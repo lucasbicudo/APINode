@@ -1,3 +1,4 @@
+import ErrorNotFound from '../errors/ErrorNotFound.js';
 import books from '../models/Book.js';
 
 class BookController {
@@ -15,7 +16,7 @@ class BookController {
       const id = req.params.id;
       const book = await books.findById(id);
       if (!book) {
-        return res.status(404).send({ message: 'ID não encontrado' });
+        next(new ErrorNotFound('ID não encontrado'));
       } else {
         return res.status(200).send(book);
       }
@@ -24,32 +25,28 @@ class BookController {
     }
   };
 
-  static createBooks = async (req, res) => {
+  static createBooks = async (req, res, next) => {
     try {
       const book = new books(req.body);
       await book.save();
+
       return res.status(201).send(book.toJSON());
     } catch (err) {
-      return res
-        .status(500)
-        .send({ message: `${err.message} - dado obrigatório` });
+      next(err);
     }
   };
 
-  static updateBooks = async (req, res) => {
-    const id = req.params.id;
-    const dataBook = req.body;
-    await books
-      //.findByIdAndUpdate(id, { $set: req.body }) You can use this way
-      .findByIdAndUpdate(id, dataBook)
-      .then(() => {
-        return res.status(200).send(`Livro ${id} atualizado com sucesso!`);
-      })
-      .catch((err) => {
-        return res
-          .status(500)
-          .send({ message: `${err.message} - Livro não foi atualizado` });
-      });
+  static updateBooks = async (req, res, next) => {
+    try {
+      const id = req.params.id;
+      const dataBook = req.body;
+      await books
+        //.findByIdAndUpdate(id, { $set: req.body }) You can use this way
+        .findByIdAndUpdate(id, dataBook);
+      return res.status(200).send(`Livro ${id} atualizado com sucesso!`);
+    } catch (err) {
+      next(err);
+    }
   };
 
   static deleteBook = async (req, res) => {
