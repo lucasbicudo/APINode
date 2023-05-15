@@ -14,7 +14,10 @@ class BookController {
   static listBookById = async (req, res, next) => {
     try {
       const id = req.params.id;
-      const book = await books.findById(id);
+      const book = await books
+        .findById(id)
+        .populate('author')
+        .populate('editor');
       if (!book) {
         console.log(book);
         next(new ErrorNotFound('ID do livro não encontrado'));
