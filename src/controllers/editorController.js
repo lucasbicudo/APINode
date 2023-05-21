@@ -1,5 +1,5 @@
 import ErrorNotFound from '../errors/ErrorNotFound.js';
-import editor from '../models/Publisher.js';
+import { editor } from '../models/index.js';
 
 class EditorController {
   static listEditor = async (req, res, next) => {

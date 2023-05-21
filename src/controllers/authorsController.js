@@ -1,5 +1,5 @@
 import ErrorNotFound from '../errors/ErrorNotFound.js';
-import authors from '../models/Author.js';
+import { authors } from '../models/index.js';
 
 class AuthorController {
   static listAuthors = async (req, res, next) => {

@@ -1,5 +1,5 @@
 import ErrorNotFound from '../errors/ErrorNotFound.js';
-import books from '../models/Book.js';
+import { authors, books } from '../models/index.js';
 
 class BookController {
   static listBooks = async (req, res, next) => {
@@ -77,15 +77,16 @@ class BookController {
     }
   };
 
-  static listBookByPublisher = async (req, res) => {
+  static listBookByPublisher = async (req, res, next) => {
     try {
-      const publisher = req.query.publisher;
+      const search = await processSearch(req.query);
       const returnList = await books
-        .find({ editor: publisher })
-        .populate('author');
+        .find(search)
+        .populate('author')
+        .populate('editor');
       res.status(200).send(returnList);
     } catch (err) {
-      res.send(err);
+      next(err);
     }
   };
 
@@ -105,6 +106,30 @@ class BookController {
       next(err);
     }
   };
+}
+
+async function processSearch(params) {
+  const { title, pagesMin, pagesMax, nameAuthor } = params;
+  let search = {};
+
+  if (title) search.title = { $regex: title, $options: 'i' };
+
+  if (pagesMin || pagesMax) search.nPages = {};
+  if (pagesMin)
+    // gte = Greater Than Or equal
+    search.nPages.$gte = pagesMin;
+  // lte = Less Than Or equal
+  if (pagesMax) search.nPages.$lte = pagesMax;
+
+  if (nameAuthor) {
+    const author = await authors.findOne({ name: nameAuthor });
+    if (author !== null) {
+      search.author = author._id;
+    } else {
+      search = null;
+    }
+  }
+  return search;
 }
 
 export default BookController;
