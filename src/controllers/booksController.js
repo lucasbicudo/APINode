@@ -1,11 +1,26 @@
 import ErrorNotFound from '../errors/ErrorNotFound.js';
-import { authors, books } from '../models/index.js';
+import ErrorRequest from '../errors/ErrorRequest.js';
+import { authors, books, editor } from '../models/index.js';
 
 class BookController {
   static listBooks = async (req, res, next) => {
     try {
-      const book = await books.find().populate('author').populate('editor');
-      res.status(200).json(book);
+      let { limit = 5, page = 1 } = req.query;
+
+      limit = parseInt(limit);
+      page = parseInt(page);
+
+      if (limit > 0 && page > 0) {
+        const book = await books
+          .find()
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .populate('author')
+          .populate('editor');
+        res.status(200).json(book);
+      } else {
+        next(new ErrorRequest());
+      }
     } catch (err) {
       next(err);
     }
@@ -80,11 +95,15 @@ class BookController {
   static listBookByPublisher = async (req, res, next) => {
     try {
       const search = await processSearch(req.query);
-      const returnList = await books
-        .find(search)
-        .populate('author')
-        .populate('editor');
-      res.status(200).send(returnList);
+      if (search !== null) {
+        const returnList = await books
+          .find(search)
+          .populate('author')
+          .populate('editor');
+        res.status(200).send(returnList);
+      } else {
+        res.status(200).send([]);
+      }
     } catch (err) {
       next(err);
     }
@@ -109,22 +128,29 @@ class BookController {
 }
 
 async function processSearch(params) {
-  const { title, pagesMin, pagesMax, nameAuthor } = params;
+  const { title, pagesMin, pagesMax, nameAuthor, nameEditor } = params;
   let search = {};
-
+  // filtro pelo titulo do livro
   if (title) search.title = { $regex: title, $options: 'i' };
-
   if (pagesMin || pagesMax) search.nPages = {};
-  if (pagesMin)
-    // gte = Greater Than Or equal
-    search.nPages.$gte = pagesMin;
+  // gte = Greater Than Or equal
+  if (pagesMin) search.nPages.$gte = pagesMin;
   // lte = Less Than Or equal
   if (pagesMax) search.nPages.$lte = pagesMax;
-
+  //filtro pelo nome do author
   if (nameAuthor) {
     const author = await authors.findOne({ name: nameAuthor });
     if (author !== null) {
       search.author = author._id;
+    } else {
+      search = null;
+    }
+  }
+  //filtro pelo nome do editor
+  if (nameEditor !== null) {
+    const returnEditor = await editor.findOne({ name: nameEditor });
+    if (returnEditor !== null) {
+      search.editor = returnEditor._id;
     } else {
       search = null;
     }
