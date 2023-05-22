@@ -1,26 +1,13 @@
 import ErrorNotFound from '../errors/ErrorNotFound.js';
-import ErrorRequest from '../errors/ErrorRequest.js';
 import { authors, books, editor } from '../models/index.js';
 
 class BookController {
   static listBooks = async (req, res, next) => {
     try {
-      let { limit = 5, page = 1 } = req.query;
+      const searchBooks = books.find();
 
-      limit = parseInt(limit);
-      page = parseInt(page);
-
-      if (limit > 0 && page > 0) {
-        const book = await books
-          .find()
-          .skip((page - 1) * limit)
-          .limit(limit)
-          .populate('author')
-          .populate('editor');
-        res.status(200).json(book);
-      } else {
-        next(new ErrorRequest());
-      }
+      req.result = searchBooks;
+      next();
     } catch (err) {
       next(err);
     }
@@ -29,12 +16,8 @@ class BookController {
   static listBookById = async (req, res, next) => {
     try {
       const id = req.params.id;
-      const book = await books
-        .findById(id)
-        .populate('author')
-        .populate('editor');
+      const book = await books.findById(id);
       if (!book) {
-        console.log(book);
         next(new ErrorNotFound('ID do livro não encontrado'));
       } else {
         return res.status(200).send(book);
@@ -96,11 +79,10 @@ class BookController {
     try {
       const search = await processSearch(req.query);
       if (search !== null) {
-        const returnList = await books
-          .find(search)
-          .populate('author')
-          .populate('editor');
-        res.status(200).send(returnList);
+        const returnList = books.find(search);
+
+        req.result = returnList;
+        next();
       } else {
         res.status(200).send([]);
       }
@@ -112,10 +94,7 @@ class BookController {
   static listBookByPublisherId = async (req, res, next) => {
     try {
       const editor = req.params.id;
-      const returnList = await books
-        .find({ editor: { _id: editor } })
-        .populate('author')
-        .populate('editor');
+      const returnList = await books.find({ editor: { _id: editor } });
       if (Object.keys(returnList).length !== 0) {
         res.status(200).send(returnList);
       } else {
@@ -139,15 +118,15 @@ async function processSearch(params) {
   if (pagesMax) search.nPages.$lte = pagesMax;
   //filtro pelo nome do author
   if (nameAuthor) {
-    const author = await authors.findOne({ name: nameAuthor });
-    if (author !== null) {
-      search.author = author._id;
+    const returnAuthor = await authors.findOne({ name: nameAuthor });
+    if (returnAuthor !== null) {
+      search.author = returnAuthor._id;
     } else {
       search = null;
     }
   }
   //filtro pelo nome do editor
-  if (nameEditor !== null) {
+  if (nameEditor) {
     const returnEditor = await editor.findOne({ name: nameEditor });
     if (returnEditor !== null) {
       search.editor = returnEditor._id;
